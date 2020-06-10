@@ -15,7 +15,7 @@ client_app = FastAPI(
 
 
 @client_app.post('/plugins')
-async def root(query: Query):
+async def plugins(query: Query):
     return {
         "Hello": "World",
         "content": query.content,
