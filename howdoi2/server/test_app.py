@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 
-from main import client_app
+from server.app import app
 
 
-client = TestClient(client_app)
+client = TestClient(app)
 
 
 def test_plugins():
@@ -12,7 +12,7 @@ def test_plugins():
         "/plugins",
         headers={},
         json={
-            "content": "hello",
+            "query_str": "test",
             "other_content": "some other content"
         },
     )
@@ -27,8 +27,9 @@ def test_plugins():
     )
 
     assert good_response.json() == {
-        "Hello": "World",
-        "content": "hello",
+        "answer_str": "@Parameters(name=\"namestring\")\n",
+        "plugin": None,
+        "other_content": None,
     }
     assert good_response.status_code == 200
 
@@ -41,7 +42,7 @@ def test_plugin():
         "/plugins/testplugin",
         headers={},
         json={
-            "content": "hello",
+            "query_str": "test",
             "other_content": "some other content"
         },
     )
@@ -56,8 +57,9 @@ def test_plugin():
     )
 
     assert good_response.json() == {
+        "answer_str": "@Parameters(name=\"namestring\")\n",
         "plugin": "testplugin",
-        "content": "hello",
+        "other_content": None,
     }
     assert good_response.status_code == 200
 
