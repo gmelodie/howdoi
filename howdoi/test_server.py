@@ -8,15 +8,15 @@ client = TestClient(app)
 
 TEST_QUERIES = [
     {
-        "query_str":"test",
-        "other_content":"some other content",
+        "query_str": "test",
+        "other_content": "some other content",
         "expected": {
             "code": 200,
         }
     },
     {
         "query_str": None,
-        "other_content":"some other content",
+        "other_content": "some other content",
         "expected": {
             "code": 422,
         }

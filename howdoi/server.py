@@ -5,13 +5,13 @@ from howdoi import howdoi
 
 class Request(BaseModel):
     query_str: str
-    other_content: str = None # optional
+    other_content: str = None  # optional
 
 
 class Response(BaseModel):
     answer_str: str
     plugin: str = None
-    other_content: str = None # optional
+    other_content: str = None  # optional
 
 
 app = FastAPI(
