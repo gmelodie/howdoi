@@ -23,7 +23,7 @@ app = FastAPI(
 
 def _get_answer(query_str):
     # TODO: maybe this wouldn't be needed in the future,
-    #       it would be done in the client
+    #       it would be done by the client
     parser = howdoi.get_parser()
     args = vars(parser.parse_args(query_str.split(' ')))
     return howdoi.howdoi(args)
