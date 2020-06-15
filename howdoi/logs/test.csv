@@ -1,0 +1,4 @@
+06/15/2020 02:59:34 PM, print in python,import colorama
+from colorama import Fore, Style
+print(Fore.BLUE + "Hello World")
+,N
