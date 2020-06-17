@@ -2,6 +2,8 @@
 # https://rasa.com/docs/rasa/nlu/components/
 language: en
 pipeline:
+  - name: "WhitespaceTokenizer"
+  - name: "CountVectorsFeaturizer"
   - name: "EmbeddingIntentClassifier"
     intent_tokenization_flag: true
     intent_split_symbol: "+"
@@ -11,7 +13,7 @@ pipeline:
   - name: CountVectorsFeaturizer
     analyzer: "char_wb"
     min_ngram: 1
-    max_ngram: 4
+    max_ngram: 8
   - name: DIETClassifier
     epochs: 100
   - name: EntitySynonymMapper
