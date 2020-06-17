@@ -5,7 +5,7 @@ import os
 import re
 import time
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import Mock, MagicMock, patch
 
 from howdoi import howdoi
 from pyquery import PyQuery as pq
@@ -70,35 +70,60 @@ class HowdoiTestCase(unittest.TestCase):
         self.assertEqual(howdoi.get_link_at_pos(['/questions/42/', '/questions/142/'], 1),
                          '/questions/42/')
 
- 
-    def test_answers(self):
 
-        howdoi.howdoi = MagicMock(return_value="Response to valid queries")
-        for query in self.queries:
-            self.assertTrue(self.call_howdoi(query))
-            print(query, self.call_howdoi(query))
+    # def test_answers(self):
 
-        howdoi.howdoi = MagicMock(return_value="Response to bad queries")
-        for query in self.bad_queries:
-            self.assertTrue(self.call_howdoi(query))
-            print(query, self.call_howdoi(query))
+    #     howdoi.howdoi = MagicMock(return_value="Response to valid queries")
+    #     for query in self.queries:
+    #         self.assertTrue(self.call_howdoi(query))
+    #         print(query, self.call_howdoi(query))
 
-        howdoi.howdoi = MagicMock(return_value="Response to pt queries")
-        os.environ['HOWDOI_URL'] = 'pt.stackoverflow.com'
-        for query in self.pt_queries:
-            self.assertTrue(self.call_howdoi(query))
-            print(query, self.call_howdoi(query))
+    #     howdoi.howdoi = MagicMock(return_value="Response to bad queries")
+    #     for query in self.bad_queries:
+    #         self.assertTrue(self.call_howdoi(query))
+    #         print(query, self.call_howdoi(query))
+
+    #     howdoi.howdoi = MagicMock(return_value="Response to pt queries")
+    #     os.environ['HOWDOI_URL'] = 'pt.stackoverflow.com'
+    #     for query in self.pt_queries:
+    #         self.assertTrue(self.call_howdoi(query))
+    #         print(query, self.call_howdoi(query))
     
     # Testing mocking _get_result with conditionals
-    # def test_answers(self):  
-    #     for query in self.queries:
-    #         howdoi.howdoi = MagicMock(return_value='--- another OLD response for test_answers')
+    
+    def test_answers(self):  
+        howdoi._clear_cache()
+    
+        # howdoi._get_result = MagicMock(return_value="Response to valid queries")
+        
+        f1 = open("resp1.html", "r")
+        f2 = open("resp2.html", "r")
+        # file_name_arr = ["resp1.html", "resp2.html"]
+
+        howdoi._get_result = Mock()
+        howdoi._get_result.side_effect = [f1.read(), f2.read()]
+
+        # def result(*args, **kwargs):
+        #     f = open(file_name_arr.pop(0), "r")
+        #     return f.read()
+
+        # howdoi._get_result = Mock()
+        # howdoi._get_result.side_effect = result
+        f1.close()
+        f2.close()
+        response = self.call_howdoi(self.queries[0])
+    
+        self.assertTrue(response)
+        
+        print(response, self.assertTrue(response))
+
+        # for query in self.queries:
+            # howdoi._get_result = MagicMock(return_value="Response to valid queries")
+
+            # response = self.call_howdoi(query)
+            # self.assertTrue(response)
             
-    #         # set it True so that we know we are calling _get_result for testing purposes
-    #         is_test = True   
-    #         self.assertTrue(self.call_howdoi(query, is_test))
-            
-    #         print(query, self.call_howdoi(query))
+            # print(query, response)
 
     # def test_answers_bing(self):
     #     os.environ['HOWDOI_SEARCH_ENGINE'] = 'bing'
