@@ -2,7 +2,9 @@
 # https://rasa.com/docs/rasa/nlu/components/
 language: en
 pipeline:
-  - name: WhitespaceTokenizer
+  - name: "EmbeddingIntentClassifier"
+    intent_tokenization_flag: true
+    intent_split_symbol: "+"
   - name: RegexFeaturizer
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer
