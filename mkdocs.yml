@@ -1,6 +1,16 @@
 site_name: HowDoI
 
+theme:
+    name: 'material'
+    palette:
+        primary: ''
+        accent: 'teal'
+
 nav:
-  - Home: index.md
-  - Installation: installation.md
-  - Contributing: contributing.md
+    - Home: index.md
+    - Installation: installation.md
+    - Contributing: contributing.md
+
+markdown_extensions:
+    - admonition
+    - codehilite
