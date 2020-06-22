@@ -1,0 +1,19 @@
+### How can I install howdoi?
+
+To install howdoi the most straight forward method is through [pip](https://pip.pypa.io/en/stable/). If you already have pip installed you can simply run:
+
+``
+pip install howdoi
+``
+
+or
+
+``
+pip install git+https://github.com/gleitz/howdoi.git#egg=howdoi
+``
+
+If you want to use [setuptools]() to install howdoi you can do so like this:
+
+``
+python setup.py install
+``
