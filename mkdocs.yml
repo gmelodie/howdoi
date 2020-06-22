@@ -5,6 +5,12 @@ theme:
     palette:
         primary: ''
         accent: 'teal'
+    icon:
+        repo: fontawesome/brands/github
+
+repo_name: gleitz/howdoi
+repo_url: https://github.com/gleitz/howdoi
+edit_uri: ''
 
 nav:
     - Home: index.md
@@ -13,4 +19,10 @@ nav:
 
 markdown_extensions:
     - admonition
-    - codehilite
+    - codehilite:
+          pygments_style: monokai
+
+extra:
+    social:
+      - icon: fontawesome/brands/github
+        link: 'https://github.com/gleitz/howdoi'
