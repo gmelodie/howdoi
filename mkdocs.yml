@@ -21,6 +21,9 @@ markdown_extensions:
     - admonition
     - codehilite:
           pygments_style: monokai
+    - markdown_include.include:
+          base_path: docs
+    - pymdownx.tabbed
 
 extra:
     social:
