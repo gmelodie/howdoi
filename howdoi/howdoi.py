@@ -102,6 +102,8 @@ CACHE_ENTRY_MAX = 128
 SUPPORTED_HELP_QUERIES = ['use howdoi', 'howdoi', 'run howdoi',
                           'do howdoi', 'howdoi howdoi', 'howdoi use howdoi']
 
+PLUGINS_DIR = 'howdoi/plugins'
+
 if os.getenv('HOWDOI_DISABLE_CACHE'):
     cache = NullCache()  # works like an always empty cache
 else:
@@ -112,6 +114,13 @@ howdoi_session = requests.session()
 
 class BlockError(RuntimeError):
     pass
+
+
+def parse_plugin(name):
+    with open(PLUGINS_DIR + '/' + name + '.json') as json_data:
+        plugin_json = json.load(json_data)
+        print(plugin_json)
+        return plugin_json
 
 
 def _random_int(width):
@@ -469,6 +478,8 @@ def get_parser():
                         action='store_true')
     parser.add_argument('-e', '--engine', help='change search engine for this query only (google, bing, duckduckgo)',
                         dest='search_engine', nargs="?", default='google')
+    parser.add_argument('--plugin', help='query a specific plugin in the plugins folder',
+                        type=str)
     return parser
 
 
