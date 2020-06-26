@@ -66,8 +66,6 @@ else:
 
 SUPPORTED_SEARCH_ENGINES = ('google', 'bing', 'duckduckgo')
 
-URL = os.getenv('HOWDOI_URL') or 'stackoverflow.com'
-
 USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0',
                'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:22.0) Gecko/20100 101 Firefox/22.0',
                'Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0',
@@ -229,7 +227,7 @@ def _is_blocked(page):
 def _get_links(query):
     search_engine = os.getenv('HOWDOI_SEARCH_ENGINE', 'google')
     search_url = _get_search_url(search_engine)
-    
+
     result = _get_result(search_url.format(URL, url_quote(query)))
     if _is_blocked(result):
         _print_err('Unable to find an answer because the search engine temporarily blocked the request. '
@@ -374,8 +372,8 @@ def _get_answers(args):
             answer = ANSWER_HEADER.format(link, answer, STAR_HEADER)
         answer += '\n'
         answers.append({
-            'answer': answer,
-            'link': link,
+            'answer': answer, 
+            'link': link, 
             'position': current_position
         })
 
@@ -402,13 +400,13 @@ def _format_answers(res, args):
         return json.dumps(res)
 
     formatted_answers = []
-
+    
     for answer in res:
         next_ans = answer["answer"]
         if args["link"]:  # if we only want links
             next_ans = answer["link"]
         formatted_answers.append(next_ans)
-
+    
     return build_splitter().join(formatted_answers)
 
 
@@ -434,13 +432,24 @@ def _get_cache_key(args):
     return str(args) + __version__
 
 
-def _set_plugin_params(plugin):
+def _set_base_url(args):
     global URL
-    URL = plugin['HOWDOI_URL']
+    if args['plugin']:
+        try:
+            plugin_name = args['plugin']
+            plugin_dict = parse_plugin(args['plugin'])
+            URL = plugin_dict['url']
+        except FileNotFoundError:
+            _print_err(f'Unable to load plugin with name {plugin_name}')
+    elif os.getenv('HOWDOI_URL'):
+        URL = os.getenv('HOWDOI_URL')
+    else:
+        URL = 'stackoverflow.com'
+
 
 def howdoi(raw_query):
     args = raw_query
-    if isinstance(raw_query, str):  # you can pass either a raw or a parsed query
+    if type(raw_query) is str:  # you can pass either a raw or a parsed query
         parser = get_parser()
         args = vars(parser.parse_args(raw_query.split(' ')))
 
@@ -450,13 +459,7 @@ def howdoi(raw_query):
     if _is_help_query(args['query']):
         return _get_help_instructions() + '\n'
 
-    if args['plugin']:
-        try:
-            plugin = parse_plugin(args['plugin'])
-        except FileNotFoundError:
-            pass
-        else:
-            _set_plugin_params(plugin)
+    _set_base_url(args)
 
     res = cache.get(cache_key)
 
@@ -475,20 +478,13 @@ def howdoi(raw_query):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description='instant coding answers via the command line')
-    parser.add_argument('query', metavar='QUERY', type=str,
-                        nargs='*', help='the question to answer')
-    parser.add_argument(
-        '-p', '--pos', help='select answer in specified position (default: 1)', default=1, type=int)
-    parser.add_argument(
-        '-a', '--all', help='display the full text of the answer', action='store_true')
-    parser.add_argument(
-        '-l', '--link', help='display only the answer link', action='store_true')
-    parser.add_argument(
-        '-c', '--color', help='enable colorized output', action='store_true')
-    parser.add_argument('-n', '--num-answers',
-                        help='number of answers to return', default=1, type=int)
+    parser = argparse.ArgumentParser(description='instant coding answers via the command line')
+    parser.add_argument('query', metavar='QUERY', type=str, nargs='*', help='the question to answer')
+    parser.add_argument('-p', '--pos', help='select answer in specified position (default: 1)', default=1, type=int)
+    parser.add_argument('-a', '--all', help='display the full text of the answer', action='store_true')
+    parser.add_argument('-l', '--link', help='display only the answer link', action='store_true')
+    parser.add_argument('-c', '--color', help='enable colorized output', action='store_true')
+    parser.add_argument('-n', '--num-answers', help='number of answers to return', default=1, type=int)
     parser.add_argument('-C', '--clear-cache', help='clear the cache',
                         action='store_true')
     parser.add_argument('-j', '--json-output', help='return answers in raw json format',
@@ -525,8 +521,7 @@ def command_line_runner():
         args['color'] = True
 
     if not args['search_engine'] in SUPPORTED_SEARCH_ENGINES:
-        _print_err('Unsupported engine.\nThe supported engines are: %s' %
-                   ', '.join(SUPPORTED_SEARCH_ENGINES))
+        _print_err('Unsupported engine.\nThe supported engines are: %s' % ', '.join(SUPPORTED_SEARCH_ENGINES))
         return
     elif args['search_engine'] != 'google':
         os.environ['HOWDOI_SEARCH_ENGINE'] = args['search_engine']
