@@ -117,7 +117,6 @@ class BlockError(RuntimeError):
 def parse_plugin(name):
     with open(PLUGINS_DIR + '/' + name + '.json') as json_data:
         plugin_json = json.load(json_data)
-        print(plugin_json)
         return plugin_json
 
 
@@ -294,7 +293,11 @@ def _get_questions(links, args):
 
 def parse_custom_site(args, html):
     print("parsing custom plugin")
-    return "dummmy plugin answer"
+    plugin = parse_plugin(args['plugin'])
+    selector = plugin['content_selector']
+    content = html(selector).text()
+    print("this is our HTML search:", content)
+    return content
 
 
 def parse_stackoverflow(args, html):
@@ -333,7 +336,7 @@ def _get_answer(args, links):
         page = _get_result(link + '?answertab=votes')
         cache.set(cache_key, page)
 
-    html = pq(page)
+    html = pq(page[3:])
 
     print("args at _get_answer", args)
 
@@ -358,7 +361,7 @@ def _get_links_with_cache(query, args):
 
     links = _get_links(query)
     links = _get_questions(links, args)
-    # print("fetched links:", links)
+    print("fetched links:", links)
 
     if not links:
         cache.set(cache_key, CACHE_EMPTY_VAL)
