@@ -295,7 +295,7 @@ def _get_questions(links, args):
 def parse_custom_site(args, html):
     plugin = parse_plugin(args['plugin'])
     selector = plugin['content_selector']
-    content = html(selector).text()
+    content = get_text(html(selector))
     return content
 
 
@@ -355,15 +355,13 @@ def _get_links_with_cache(query, args):
         return res
 
     links = _get_links(query)
-    links = _get_questions(links, args)
-    # print("fetched links:", links)
-
     if not links:
         cache.set(cache_key, CACHE_EMPTY_VAL)
-
+    
+    question_links = _get_questions(links, args)
     cache.set(cache_key, links or CACHE_EMPTY_VAL)
 
-    return links
+    return question_links
 
 
 def build_splitter(splitter_character='=', splitter_length=80):
@@ -461,14 +459,11 @@ def _set_base_url(args):
     if args['plugin']:
         try:
             plugin_name = args['plugin']
-            plugin_dict = parse_plugin(plugin_name)
-            URL = plugin_dict['url']
+            URL = parse_plugin(plugin_name)['url']
         except FileNotFoundError:
             _print_err(f'Unable to load plugin with name {plugin_name}')
-    elif os.getenv('HOWDOI_URL'):
-        URL = os.getenv('HOWDOI_URL')
     else:
-        URL = 'stackoverflow.com'
+        URL = os.getenv('HOWDOI_URL') or 'stackoverflow.com'
 
 
 def howdoi(raw_query):
