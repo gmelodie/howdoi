@@ -1,3 +1,5 @@
 {
-    "url": "https://arxiv.org/"
+    "url": "https://arxiv.org/abs",
+    "title_class": "title mathjax",
+    "content_class": "descriptor"
 }
