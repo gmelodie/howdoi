@@ -357,14 +357,12 @@ def _get_links_with_cache(query, args):
         return res
 
     links = _get_links(query)
+    links = _get_questions(links, args)
+    # print("fetched links:", links)
 
-    
     if not links:
         cache.set(cache_key, CACHE_EMPTY_VAL)
 
-    links = _get_questions(links, args)
-    print("fetched links:", links)
-    
     cache.set(cache_key, links or CACHE_EMPTY_VAL)
 
     return links
