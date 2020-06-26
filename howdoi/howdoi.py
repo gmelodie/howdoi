@@ -292,17 +292,13 @@ def _get_questions(links, args):
 
 
 def parse_custom_site(args, html):
-    print("parsing custom plugin")
     plugin = parse_plugin(args['plugin'])
     selector = plugin['content_selector']
     content = html(selector).text()
-    print("this is our HTML search:", content)
     return content
 
 
 def parse_stackoverflow(args, html):
-    print("parsing stackoverflow")
-
     first_answer = html('.answer').eq(0)
 
     instructions = first_answer.find('pre') or first_answer.find('code')
@@ -336,9 +332,7 @@ def _get_answer(args, links):
         page = _get_result(link + '?answertab=votes')
         cache.set(cache_key, page)
 
-    html = pq(page[3:])
-
-    print("args at _get_answer", args)
+    html = pq(page[1:])
 
     if args['plugin']:
         text = parse_custom_site(args, html)
@@ -361,7 +355,7 @@ def _get_links_with_cache(query, args):
 
     links = _get_links(query)
     links = _get_questions(links, args)
-    print("fetched links:", links)
+    # print("fetched links:", links)
 
     if not links:
         cache.set(cache_key, CACHE_EMPTY_VAL)
@@ -489,7 +483,7 @@ def howdoi(raw_query):
         return _get_help_instructions() + '\n'
 
     _set_base_url(args)
-    print("set base URL:", URL)
+    # print("set base URL:", URL)
 
     res = cache.get(cache_key)
 
