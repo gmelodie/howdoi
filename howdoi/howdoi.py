@@ -275,29 +275,30 @@ def _format_output(code, args):
                      TerminalFormatter(bg='dark'))
 
 
-def _is_question(link):
+def _is_question(link, args):
     for fragment in BLOCKED_QUESTION_FRAGMENTS:
         if fragment in link:
             return False
-    return re.search(r'questions/\d+/', link)
+
+    if URL == 'stackoverflow.com':
+        return re.search(r'questions/\d+/', link)
+
+    plugin = parse_plugin(args['plugin'])
+    plugin_url = plugin['url']
+    return plugin_url in link
 
 
-def _get_questions(links):
-    return [link for link in links if _is_question(link)]
+def _get_questions(links, args):
+    return [link for link in links if _is_question(link, args)]
 
 
-def _get_answer(args, links):
-    link = get_link_at_pos(links, args['pos'])
-    if not link:
-        return False
+def parse_custom_site(args, html):
+    print("parsing custom plugin")
+    return "dummmy plugin answer"
 
-    cache_key = link
-    page = cache.get(link)
-    if not page:
-        page = _get_result(link + '?answertab=votes')
-        cache.set(cache_key, page)
 
-    html = pq(page)
+def parse_stackoverflow(args, html):
+    print("parsing stackoverflow")
 
     first_answer = html('.answer').eq(0)
 
@@ -318,13 +319,36 @@ def _get_answer(args, links):
         text = '\n'.join(texts)
     else:
         text = _format_output(get_text(instructions.eq(0)), args)
+    return text
+
+
+def _get_answer(args, links):
+    link = get_link_at_pos(links, args['pos'])
+    if not link:
+        return False
+
+    cache_key = link
+    page = cache.get(link)
+    if not page:
+        page = _get_result(link + '?answertab=votes')
+        cache.set(cache_key, page)
+
+    html = pq(page)
+
+    print("args at _get_answer", args)
+
+    if args['plugin']:
+        text = parse_custom_site(args, html)
+    else:
+        text = parse_stackoverflow(args, html)
+
     if text is None:
         text = NO_ANSWER_MSG
     text = text.strip()
     return text
 
 
-def _get_links_with_cache(query):
+def _get_links_with_cache(query, args):
     cache_key = query + "-links"
     res = cache.get(cache_key)
     if res:
@@ -333,13 +357,17 @@ def _get_links_with_cache(query):
         return res
 
     links = _get_links(query)
+
+    
     if not links:
         cache.set(cache_key, CACHE_EMPTY_VAL)
 
-    question_links = _get_questions(links)
-    cache.set(cache_key, question_links or CACHE_EMPTY_VAL)
+    links = _get_questions(links, args)
+    print("fetched links:", links)
+    
+    cache.set(cache_key, links or CACHE_EMPTY_VAL)
 
-    return question_links
+    return links
 
 
 def build_splitter(splitter_character='=', splitter_length=80):
@@ -353,7 +381,7 @@ def _get_answers(args):
              False if unable to get answers
     """
 
-    question_links = _get_links_with_cache(args['query'])
+    question_links = _get_links_with_cache(args['query'], args)
     if not question_links:
         return False
 
@@ -437,7 +465,7 @@ def _set_base_url(args):
     if args['plugin']:
         try:
             plugin_name = args['plugin']
-            plugin_dict = parse_plugin(args['plugin'])
+            plugin_dict = parse_plugin(plugin_name)
             URL = plugin_dict['url']
         except FileNotFoundError:
             _print_err(f'Unable to load plugin with name {plugin_name}')
@@ -460,6 +488,7 @@ def howdoi(raw_query):
         return _get_help_instructions() + '\n'
 
     _set_base_url(args)
+    print("set base URL:", URL)
 
     res = cache.get(cache_key)
 
