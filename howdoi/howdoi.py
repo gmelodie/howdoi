@@ -290,8 +290,7 @@ def _get_stackoverflow_questions(links):
     return [link for link in links if _is_question(link)]
 
 
-def parse_custom(html, args):
-    extractor = args['extractor']
+def parse_custom_page(html, extractor):
     return get_text(html(extractor))
 
 
@@ -332,7 +331,7 @@ def _get_answer(args, links):
     html = pq(page[1:])
 
     if 'extractor' in args:
-        text = parse_custom(html, args)
+        text = parse_custom_page(html, args['extractor'])
     else:
         text = parse_stackoverflow(html, args)
 
