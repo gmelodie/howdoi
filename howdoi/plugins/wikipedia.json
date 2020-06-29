@@ -1,4 +1,4 @@
 {
-    "searcher": "https://en.wikipedia.org/wiki",
-    "extractor": "p:first"
+    "url": "https://en.wikipedia.org/wiki",
+    "selector": "p:first"
 }

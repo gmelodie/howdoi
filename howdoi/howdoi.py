@@ -227,12 +227,7 @@ def _get_links(args):
     search_engine = os.getenv('HOWDOI_SEARCH_ENGINE', 'google')
     search_url = _get_search_url(search_engine)
 
-    if 'searcher' in args:
-        content_url = args['searcher']
-    else:
-        content_url = os.getenv('HOWDOI_URL') or 'stackoverflow.com'
-
-    result = _get_result(search_url.format(content_url, url_quote(query)))
+    result = _get_result(search_url.format(args['url'], url_quote(query)))
     if _is_blocked(result):
         _print_err('Unable to find an answer because the search engine temporarily blocked the request. '
                    'Please wait a few minutes or select a different search engine.')
@@ -292,6 +287,7 @@ def _get_stackoverflow_questions(links):
 
 def parse_custom_page(html, extractor):
     return get_text(html(extractor))
+    return html(selector).text()
 
 
 def parse_stackoverflow(html, args):
@@ -330,8 +326,8 @@ def _get_answer(args, links):
 
     html = pq(page[1:])
 
-    if 'extractor' in args:
-        text = parse_custom_page(html, args['extractor'])
+    if args.get('selector'):
+        text = parse_custom_page(html, args['selector'])
     else:
         text = parse_stackoverflow(html, args)
 
@@ -354,8 +350,7 @@ def _get_links_with_cache(args):
     if not links:
         cache.set(cache_key, CACHE_EMPTY_VAL)
 
-    # If parsing Stack Overflow get links that are questions
-    if not args.get("searcher"):
+    if args['url'] == 'stackoverflow.com':
         links = _get_stackoverflow_questions(links)
 
     cache.set(cache_key, links or CACHE_EMPTY_VAL)
@@ -501,6 +496,18 @@ def get_parser():
     return parser
 
 
+def _add_plugin_info_to_args(args):
+    plugin_name = args['plugin']
+    path = 'howdoi/plugins/{plugin_name}.json'.format(plugin_name=plugin_name)
+    try:
+        with open(path) as json_data:
+            plugin_json = json.load(json_data)
+            args['url'] = plugin_json['url']
+            args['selector'] = plugin_json['selector']
+    except Exception as e:
+        raise e
+
+
 def command_line_runner():
     parser = get_parser()
     args = vars(parser.parse_args())
@@ -516,13 +523,10 @@ def command_line_runner():
             _print_err('Clearing cache failed')
         return
 
-    if args['plugin']:
-        plugin_name = args['plugin']
-        path = 'howdoi/plugins/{plugin_name}.json'.format(plugin_name=plugin_name)
-        with open(path) as json_data:
-            plugin_json = json.load(json_data)
-            args['searcher'] = plugin_json['searcher']
-            args['extractor'] = plugin_json['extractor']
+    if args.get('plugin'):
+        _add_plugin_info_to_args(args)
+    else:
+        args['url'] = os.getenv('HOWDOI_URL') or 'stackoverflow.com'
 
     if not args['query']:
         parser.print_help()
