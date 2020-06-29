@@ -185,8 +185,8 @@ def _extract_links_from_bing(html):
 
 
 def _extract_links_from_google(html):
-    return [a.attrib['href'] for a in html('.l')] or \
-        [a.attrib['href'] for a in html('.r')('a')]
+    return [a.attrib['href'] for a in html('.l') if not a.attrib['href'].startswith('/search?hl')] or \
+        [a.attrib['href'] for a in html('.r')('a') if not a.attrib['href'].startswith('/search?hl')]
 
 
 def _extract_links_from_duckduckgo(html):
