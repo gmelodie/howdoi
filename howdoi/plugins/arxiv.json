@@ -1,4 +1,4 @@
 {
-    "url": "https://arxiv.org/abs",
-    "content_selector": ".abstract.mathjax"
+    "searcher": "https://arxiv.org/abs",
+    "extractor": ".abstract.mathjax"
 }

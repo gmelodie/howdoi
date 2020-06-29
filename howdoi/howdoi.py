@@ -30,6 +30,7 @@ from pyquery import PyQuery as pq
 from requests.exceptions import ConnectionError
 from requests.exceptions import SSLError
 
+
 # Handle imports for Python 2 and 3
 if sys.version < '3':
     import codecs
@@ -97,10 +98,9 @@ CACHE_EMPTY_VAL = "NULL"
 CACHE_DIR = appdirs.user_cache_dir('howdoi')
 CACHE_ENTRY_MAX = 128
 
+HTML_CACHE_PATH = 'cache_html'
 SUPPORTED_HELP_QUERIES = ['use howdoi', 'howdoi', 'run howdoi',
                           'do howdoi', 'howdoi howdoi', 'howdoi use howdoi']
-
-PLUGINS_DIR = 'howdoi/plugins'
 
 if os.getenv('HOWDOI_DISABLE_CACHE'):
     cache = NullCache()  # works like an always empty cache
@@ -112,12 +112,6 @@ howdoi_session = requests.session()
 
 class BlockError(RuntimeError):
     pass
-
-
-def parse_plugin(name):
-    with open(PLUGINS_DIR + '/' + name + '.json') as json_data:
-        plugin_json = json.load(json_data)
-        return plugin_json
 
 
 def _random_int(width):
@@ -144,6 +138,11 @@ def get_proxies():
             else:
                 filtered_proxies[key] = value
     return filtered_proxies
+
+
+def _format_url_to_filename(url, file_ext='html'):
+    filename = ''.join(ch for ch in url if ch.isalnum())
+    return filename + '.' + file_ext
 
 
 def _get_result(url):
@@ -186,8 +185,8 @@ def _extract_links_from_bing(html):
 
 
 def _extract_links_from_google(html):
-    return [a.attrib['href'] for a in html('.l') if not a.attrib['href'].startswith('/search?hl')] or \
-        [a.attrib['href'] for a in html('.r')('a') if not a.attrib['href'].startswith('/search?hl')]
+    return [a.attrib['href'] for a in html('.l')] or \
+        [a.attrib['href'] for a in html('.r')('a')]
 
 
 def _extract_links_from_duckduckgo(html):
@@ -223,11 +222,17 @@ def _is_blocked(page):
     return False
 
 
-def _get_links(query):
+def _get_links(args):
+    query = args['query']
     search_engine = os.getenv('HOWDOI_SEARCH_ENGINE', 'google')
     search_url = _get_search_url(search_engine)
 
-    result = _get_result(search_url.format(URL, url_quote(query)))
+    if 'searcher' in args:
+        content_url = args['searcher']
+    else:
+        content_url = os.getenv('HOWDOI_URL') or 'stackoverflow.com'
+
+    result = _get_result(search_url.format(content_url, url_quote(query)))
     if _is_blocked(result):
         _print_err('Unable to find an answer because the search engine temporarily blocked the request. '
                    'Please wait a few minutes or select a different search engine.')
@@ -274,31 +279,23 @@ def _format_output(code, args):
                      TerminalFormatter(bg='dark'))
 
 
-def _is_question(link, args):
+def _is_question(link):
     for fragment in BLOCKED_QUESTION_FRAGMENTS:
         if fragment in link:
             return False
-
-    if URL == 'stackoverflow.com':
-        return re.search(r'questions/\d+/', link)
-
-    plugin = parse_plugin(args['plugin'])
-    plugin_url = plugin['url']
-    return plugin_url in link
+    return re.search(r'questions/\d+/', link)
 
 
-def _get_questions(links, args):
-    return [link for link in links if _is_question(link, args)]
+def _get_stackoverflow_questions(links):
+    return [link for link in links if _is_question(link)]
 
 
-def parse_custom_site(args, html):
-    plugin = parse_plugin(args['plugin'])
-    selector = plugin['content_selector']
-    content = get_text(html(selector))
-    return content
+def parse_custom(html, args):
+    extractor = args['extractor']
+    return get_text(html(extractor))
 
 
-def parse_stackoverflow(args, html):
+def parse_stackoverflow(html, args):
     first_answer = html('.answer').eq(0)
 
     instructions = first_answer.find('pre') or first_answer.find('code')
@@ -334,10 +331,10 @@ def _get_answer(args, links):
 
     html = pq(page[1:])
 
-    if args['plugin']:
-        text = parse_custom_site(args, html)
+    if 'extractor' in args:
+        text = parse_custom(html, args)
     else:
-        text = parse_stackoverflow(args, html)
+        text = parse_stackoverflow(html, args)
 
     if text is None:
         text = NO_ANSWER_MSG
@@ -345,7 +342,8 @@ def _get_answer(args, links):
     return text
 
 
-def _get_links_with_cache(query, args):
+def _get_links_with_cache(args):
+    query = args['query']
     cache_key = query + "-links"
     res = cache.get(cache_key)
     if res:
@@ -353,14 +351,17 @@ def _get_links_with_cache(query, args):
             res = False
         return res
 
-    links = _get_links(query)
+    links = _get_links(args)
     if not links:
         cache.set(cache_key, CACHE_EMPTY_VAL)
-    
-    question_links = _get_questions(links, args)
+
+    # If parsing Stack Overflow get links that are questions
+    if not args['searcher']:
+        links = _get_stackoverflow_questions(links)
+
     cache.set(cache_key, links or CACHE_EMPTY_VAL)
 
-    return question_links
+    return links
 
 
 def build_splitter(splitter_character='=', splitter_length=80):
@@ -374,7 +375,7 @@ def _get_answers(args):
              False if unable to get answers
     """
 
-    question_links = _get_links_with_cache(args['query'], args)
+    question_links = _get_links_with_cache(args)
     if not question_links:
         return False
 
@@ -453,18 +454,6 @@ def _get_cache_key(args):
     return str(args) + __version__
 
 
-def _set_base_url(args):
-    global URL
-    if args['plugin']:
-        try:
-            plugin_name = args['plugin']
-            URL = parse_plugin(plugin_name)['url']
-        except FileNotFoundError:
-            _print_err(f'Unable to load plugin with name {plugin_name}')
-    else:
-        URL = os.getenv('HOWDOI_URL') or 'stackoverflow.com'
-
-
 def howdoi(raw_query):
     args = raw_query
     if type(raw_query) is str:  # you can pass either a raw or a parsed query
@@ -476,9 +465,6 @@ def howdoi(raw_query):
 
     if _is_help_query(args['query']):
         return _get_help_instructions() + '\n'
-
-    _set_base_url(args)
-    # print("set base URL:", URL)
 
     res = cache.get(cache_key)
 
@@ -512,8 +498,7 @@ def get_parser():
                         action='store_true')
     parser.add_argument('-e', '--engine', help='change search engine for this query only (google, bing, duckduckgo)',
                         dest='search_engine', nargs="?", default='google')
-    parser.add_argument('--plugin', help='query a specific plugin in the plugins folder',
-                        type=str)
+    parser.add_argument('--plugin', help='query a specific plugin in the plugins folder', type=str)
     return parser
 
 
@@ -531,6 +516,14 @@ def command_line_runner():
         else:
             _print_err('Clearing cache failed')
         return
+
+    if args['plugin']:
+        plugin_name = args['plugin']
+        path = 'howdoi/plugins/{plugin_name}.json'.format(plugin_name=plugin_name)
+        with open(path) as json_data:
+            plugin_json = json.load(json_data)
+            args['searcher'] = plugin_json['searcher']
+            args['extractor'] = plugin_json['extractor']
 
     if not args['query']:
         parser.print_help()
