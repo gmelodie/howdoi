@@ -17,6 +17,7 @@ nav:
     - Installation: installation.md
     - "User Guide": user-guide.md
     - Contributing: contributing.md
+    - Troubleshooting: troubleshooting.md
 
 markdown_extensions:
     - admonition
