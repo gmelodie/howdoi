@@ -190,7 +190,6 @@ def _extract_links_from_google(html):
         [a.attrib['href'] for a in html('.r')('a') if not a.attrib['href'].startswith('/search?hl')]
 
 
-
 def _extract_links_from_duckduckgo(html):
     html.remove_namespaces()
     links_anchors = html.find('a.result__a')
