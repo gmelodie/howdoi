@@ -32,6 +32,7 @@ class HowdoiTestCase(unittest.TestCase):
             return result
 
     def setUp(self):
+        os.environ['HOWDOI_URL'] = ''
         self.original_get_result = howdoi._get_result
         howdoi._get_result = self._get_result_mock
 
