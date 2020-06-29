@@ -203,7 +203,7 @@ class HowdoiTestCase(unittest.TestCase):
                  'https://stackoverflow.com/questions/40108569/how-to-get-the-last-line-of-a-file-using-cat-command']
         expected_output = [
             'https://stackoverflow.com/questions/40108569/how-to-get-the-last-line-of-a-file-using-cat-command']
-        actual_output = howdoi._get_questions(links)
+        actual_output = howdoi._get_stackoverflow_questions(links)
         self.assertSequenceEqual(actual_output, expected_output)
 
     def test_help_queries(self):
