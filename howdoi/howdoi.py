@@ -356,7 +356,7 @@ def _get_links_with_cache(args):
         cache.set(cache_key, CACHE_EMPTY_VAL)
 
     # If parsing Stack Overflow get links that are questions
-    if not args['searcher']:
+    if not args.get("searcher"):
         links = _get_stackoverflow_questions(links)
 
     cache.set(cache_key, links or CACHE_EMPTY_VAL)
