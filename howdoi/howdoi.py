@@ -286,7 +286,6 @@ def _get_stackoverflow_questions(links):
 
 
 def parse_custom_page(html, extractor):
-    return get_text(html(extractor))
     return html(selector).text()
 
 
