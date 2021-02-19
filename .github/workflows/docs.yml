@@ -25,7 +25,7 @@ jobs:
       run:  python -m mkdocs build
 
     - name: Deploy MkDocs
-      uses: mhausenblas/mkdocs-deploy-gh-pages@1.12
+      uses: mhausenblas/mkdocs-deploy-gh-pages@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
