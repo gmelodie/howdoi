@@ -1,4 +1,4 @@
-site_name: HowDoI
+site_name: howdoi
 
 theme:
     name: 'material'
@@ -13,7 +13,7 @@ repo_url: https://github.com/gleitz/howdoi
 edit_uri: ''
 
 nav:
-    - HowDoI: index.md
+    - howdoi: index.md
     - Installation: installation.md
     - "User Guide": user-guide.md
     - Contributing: contributing.md
