@@ -1,4 +1,4 @@
-# HowDoI
+# howdoi
 Never have open your browser to look for answers again.
 
 Create tar archive:
